@@ -1,1 +1,2 @@
 BOT_TOKEN="5081348955:AAEOJchs95jyC3giaXu0hergPt98DHthkDs"
+adminpass = "1234"
