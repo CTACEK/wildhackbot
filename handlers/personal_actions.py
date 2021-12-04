@@ -29,7 +29,10 @@ async def start(message: types.Message):
 
 @dp.message_handler(lambda message: message.text == "Заполнить заявку")
 async def without_puree(message: types.Message):
-    await message.answer("Так невкусно!")
+
+    await message.answer("Для заполнения анкеты напишите свое ФИО")
+
+
 
 
 @dp.message_handler(lambda message: message.text == "FAQ")
@@ -41,64 +44,3 @@ async def without_puree(message: types.Message):
 async def without_puree(message: types.Message):
     await message.answer("Бла бла бла")
 
-
-@dp.message_handler(commands=("spent", "earned", "s", "e"), commands_prefix="/!")
-async def start(message: types.Message):
-    cmd_variants = (('/spent', '/s', '!spent', '!s'), ('/earned', '/e', '!earned', '!e'))
-    operation = '-' if message.text.startswith(cmd_variants[0]) else '+'
-
-    value = message.text
-    for i in cmd_variants:
-        for j in i:
-            value = value.replace(j, '').strip()
-
-    if (len(value)):
-        x = re.findall(r"\d+(?:.\d+)?", value)
-        if (len(x)):
-            value = float(x[0].replace(',', '.'))
-
-            BotDB.add_record(message.from_user.id, operation, value)
-
-            if (operation == '-'):
-                await message.reply("✅ Запись о <u><b>расходе</b></u> успешно внесена!")
-            else:
-                await message.reply("✅ Запись о <u><b>доходе</b></u> успешно внесена!")
-        else:
-            await message.reply("Не удалось определить сумму!")
-    else:
-        await message.reply("Не введена сумма!")
-
-
-@dp.message_handler(commands=("history", "h"), commands_prefix="/!")
-async def start(message: types.Message):
-    cmd_variants = ('/history', '/h', '!history', '!h')
-    within_als = {
-        "day": ('today', 'day', 'сегодня', 'день'),
-        "month": ('month', 'месяц'),
-        "year": ('year', 'год'),
-    }
-
-    cmd = message.text
-    for r in cmd_variants:
-        cmd = cmd.replace(r, '').strip()
-
-    within = 'day'
-    if (len(cmd)):
-        for k in within_als:
-            for als in within_als[k]:
-                if (als == cmd):
-                    within = k
-
-    records = BotDB.get_records(message.from_user.id, within)
-
-    if (len(records)):
-        answer = f"🕘 История операций за {within_als[within][-1]}\n\n"
-
-        for r in records:
-            answer += "<b>" + ("➖ Расход" if not r[2] else "➕ Доход") + "</b>"
-            answer += f" - {r[3]}"
-            answer += f" <i>({r[4]})</i>\n"
-
-        await message.reply(answer)
-    else:
-        await message.reply("Записей не обнаружено!")
