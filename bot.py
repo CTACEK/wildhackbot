@@ -3,6 +3,7 @@ from dispatcher import dp
 import handlers
 
 from db import BotDB
+
 BotDB = BotDB("C:/Users/Яна/PycharmProjects/wildhackbot/database.db")
 
 if __name__ == "__main__":
