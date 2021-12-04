@@ -8,17 +8,17 @@ class BotDB:
 
     def user_exists(self, user_id):
         """Проверяем, есть ли юзер в базе"""
-        result = self.cursor.execute("SELECT `id` FROM `users` WHERE `user_id` = ?", (user_id,))
+        result = self.cursor.execute("SELECT id FROM users WHERE user_id = 123")
         return bool(len(result.fetchall()))
 
     def get_user_id(self, user_id):
         """Достаем id юзера в базе по его user_id"""
-        result = self.cursor.execute("SELECT `id` FROM `users` WHERE `user_id` = ?", (user_id,))
+        result = self.cursor.execute("SELECT `id` FROM users WHERE `user_id` = ? VALUES(user_id);""")
         return result.fetchone()[0]
 
     def add_user(self, user_id):
         """Добавляем юзера в базу"""
-        self.cursor.execute("INSERT INTO `users` (`user_id`) VALUES (?)", (user_id,))
+        self.cursor.execute("INSERT INTO users (user_id) VALUES (?)", (user_id,))
         return self.conn.commit()
 
     def add_record(self, user_id, operation, value):
