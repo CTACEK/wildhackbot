@@ -1,12 +1,10 @@
 from aiogram import types, Dispatcher
 
-import re
-import requests
+
 from bot import BotDB
 from aiogram import Bot, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
-import config
 from config import adminpass
 from dispatcher import dp, bot
 import keyboards
