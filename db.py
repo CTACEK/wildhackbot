@@ -38,7 +38,7 @@ class BotDB:
         return self.conn.commit()
 
     def get_status(self, user_id):
-        return self.cursor.execute("SELECT `reviewed` FROM users WHERE `user_id` = ?;", (user_id,)).fetchall()
+        return self.cursor.execute("SELECT reviewed FROM users WHERE user_id = '{0}';".format(user_id,)).fetchall()
 
     def close(self):
         """Закрываем соединение с БД"""
