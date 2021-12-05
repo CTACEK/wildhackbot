@@ -35,6 +35,7 @@ class FMSAdmin(StatesGroup):
 #     Path(f"{path}").mkdir(parents=True, exist_ok=True)
 #
 #     await bot.download_file(file_path=file.file_path, destination=f"{path}/{file_name}")
+#
 
 
 @dp.message_handler(content_types=[ContentType.VOICE])
