@@ -6,10 +6,13 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 
 def keyboardadmin():
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["Список неотмеченных анкет", "Все анкеты", "На главное меню"]
+    buttons = ["Список неотмеченных анкет", "Все анкеты", "Назад"]
     keyboard.add(*buttons)
+    return keyboard
 
-def keyboardadmin():
+def keyboarduser():
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["Список неотмеченных анкет", "Все анкеты", "На главное меню"]
+    buttons = ["Заполнить заявку", "FAQ", "О заповеднике"]
     keyboard.add(*buttons)
+    return keyboard
+#

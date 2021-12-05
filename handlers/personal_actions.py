@@ -1,5 +1,3 @@
-
-
 from aiogram import types, Dispatcher
 
 import re
@@ -10,7 +8,9 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 import config
 from config import adminpass
 from dispatcher import dp
+import keyboards
 
+admin = ["Список неотмеченных анкет", "Все анкеты", "Назад"]
 
 class FMSAdmin(StatesGroup):
     temppass = State()
@@ -23,16 +23,14 @@ async def iwanttobeadmin(message: types.Message):
     await FMSAdmin.temppass.set()
 
 
-
 @dp.message_handler(state=FMSAdmin.temppass)
 async def checkadmin(message: types.Message, state: FSMContext):
-
-    if message.text == "1234":
+    if message.text == adminpass:
         await message.answer(f"Здравствуйте великий админ {message.from_user.first_name}")
-        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        buttons = ["Список неотмеченных анкет", "Все анкеты", "Назад"]
-        keyboard.add(*buttons)
-        await message.answer((f"*появление интерфеса*"), reply_markup=keyboard)
+        # keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        # buttons = ["Список неотмеченных анкет", "Все анкеты", "Назад"]
+        # keyboard.add(*buttons)
+        await message.answer((f"*появление интерфеса*"), reply_markup=keyboards.keyboardadmin())
         await FMSAdmin.next()
 
 
@@ -46,15 +44,45 @@ async def checkadmin(message: types.Message, state: FSMContext):
 #     keyboard.add(*buttons)
 #     await state.finish()
 
-@dp.message_handler(lambda message: message.text == "Список неотмеченных анкет",state=FMSAdmin.connectionpass)
+@dp.message_handler(lambda message: message.text == "Список неотмеченных анкет", state=FMSAdmin.connectionpass)
 async def list(message: types.Message):
     await message.answer("Неответ")
 
-@dp.message_handler(lambda message: message.text == "Все анкеты",state=FMSAdmin.connectionpass)
-async def list(message: types.Message):
-    await message.answer("Лист")
 
-@dp.message_handler(lambda message: message.text == "Назад",state=FMSAdmin.connectionpass)
+@dp.message_handler(lambda message: message.text == "Все анкеты", state=FMSAdmin.connectionpass)
+async def list(message: types.Message):
+    global admin
+    await message.answer("Список волонтёров:")
+    result = BotDB.get_bd()
+    k = 1
+    for person in result:
+        if person[3] is not None:
+            await message.answer(f"{str(k)} {person[3]}")
+            k += 1
+
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    buttons = ["Хотите кого-то найти?", "Назад"]
+    keyboard.add(*buttons)
+    await message.answer((f"*ожидаю ваше сообщение*"), reply_markup=keyboard)
+
+@dp.message_handler(lambda message: message.text == "Хотите кого-то найти?", state=FMSAdmin.connectionpass)
+async def list(message: types.Message):
+    global admin
+    await message.answer("Список волонтёров:")
+    result = BotDB.get_bd()
+    k = 1
+    for person in result:
+        if person[3] is not None:
+            await message.answer(f"{str(k)} {person[3]}")
+            k += 1
+
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    buttons = ["Хотите кого-то найти?", "Назад"]
+    keyboard.add(*buttons)
+    await message.answer((f"*ожидаю ваше сообщение*"), reply_markup=keyboard)
+
+
+@dp.message_handler(lambda message: message.text == "Назад", state=FMSAdmin.connectionpass)
 async def list(message: types.Message, state: FSMContext):
     await message.answer("Вы в режиме юзера")
     await state.finish()
@@ -73,12 +101,9 @@ async def start(message: types.Message):
                                    (
                                        f"Здравствуйте, {message.from_user.first_name} 👋 Я {me.first_name} помогу ответить на Ваш вопрос. Что Вы хотели бы узнать?"))
 
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["Заполнить заявку", "FAQ", "О заповеднике"]
-    keyboard.add(*buttons)
-    await message.answer((f"*ожидаю ваше сообщение*"), reply_markup=keyboard)
-    # await message.answer((f"Чего желаете, {message.from_user.first_name}?"), reply_markup=keyboard)
 
+    await message.answer((f"*ожидаю ваше сообщение*"), reply_markup=keyboards.keyboarduser())
+    # await message.answer((f"Чего желаете, {message.from_user.first_name}?"), reply_markup=keyboard)
 
 
 @dp.message_handler(lambda message: message.text == "FAQ")
@@ -115,7 +140,10 @@ class FSMAnket(StatesGroup):
 @dp.message_handler(lambda message: message.text == "Заполнить заявку", state=None)
 async def cm_start(message: types.Message):
     await FSMAnket.full_name.set()
-    await message.answer("Для заполнения анкеты напишите свое ФИО 👤")
+    # keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    # buttons = ["Да", "Нет"]
+    # keyboard.add(*buttons)
+    await message.answer("Для заполнения анкеты напишите свое ФИО 👤", reply_markup=types.ReplyKeyboardRemove())
 
 
 # Грузим ФИО
@@ -131,7 +159,7 @@ async def load_fio(message: types.Message, state: FSMContext):
 async def load_mail(message: types.Message, state: FSMContext):
     BotDB.add_information(message.from_user.id, "mail", message.text)
     await FSMAnket.next()
-    await message.answer("Укажите Вашу дату рождения 📅")
+    await message.answer("Укажите Вашу дату рождения 📅", reply_markup=types.ReplyKeyboardRemove())
 
 
 # Запоминаем дату рождения
@@ -155,19 +183,23 @@ async def load_birthday(message: types.Message, state: FSMContext):
 async def load_birthday(message: types.Message, state: FSMContext):
     BotDB.add_information(message.from_user.id, "education", message.text)
     await FSMAnket.next()
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    buttons = ["Озерный", "Травяной", "Узон", "Долина гейзеров", "Исток и Аэродром", "Кроноки и Семячик"]
+    keyboard.add(*buttons)
     await message.answer(
         "Укажите желаемую территорию для осуществления волонтерских работ 🏞 \n\nПодробнее Вы можете ознакомиться с "
         "территориями Кроноцкого заповедника и Южно-Камчатского заказника, с кордонами, со структурой заповедника, "
         "с актуальными событиями, происходящими на наших территориях на нашем сайте www.kronoki.ru \n\nПодсказка: На "
-        "сайте необходимо найти раздел Волонтерство ➝ Волонтерство на территориях ")
+        "сайте необходимо найти раздел Волонтерство ➝ Волонтерство на территориях ", reply_markup=keyboard)
 
 
 # Выбор заповедника
-@dp.message_handler(state=FSMAnket.territory) #СЮДА ПОТОМ ВКЛИНИТЬ КНОПАЧЬКИ С ВЫБОРОМ ЗАПОВЕДНИКА!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@dp.message_handler(
+    state=FSMAnket.territory)  # СЮДА ПОТОМ ВКЛИНИТЬ КНОПАЧЬКИ С ВЫБОРОМ ЗАПОВЕДНИКА!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 async def load_birthday(message: types.Message, state: FSMContext):
     BotDB.add_information(message.from_user.id, "territory", message.text)
     await FSMAnket.next()
-    await message.answer("Какую дату заезда Вы планируете? 📆")
+    await message.answer("Какую дату заезда Вы планируете? 📆", reply_markup=types.ReplyKeyboardRemove())
 
 
 # Дата заезда
@@ -191,15 +223,18 @@ async def load_birthday(message: types.Message, state: FSMContext):
 async def load_birthday(message: types.Message, state: FSMContext):
     BotDB.add_information(message.from_user.id, "lang", message.text)
     await FSMAnket.next()
-    await message.answer("Имеется ли у Вас опыт волонтерских работ? 👥")
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    buttons = ["Да", "Нет"]
+    keyboard.add(*buttons)
+    await message.answer("Имеется ли у Вас опыт волонтерских работ? 👥", reply_markup=keyboard)
 
 
 # Опыт работы волонтером
-@dp.message_handler(state=FSMAnket.experience) #КНОПАЧЬКИ ДА/НЕТ!!!!!!!!!!!!!!!!!!!!!!!!!
+@dp.message_handler(state=FSMAnket.experience)  # КНОПАЧЬКИ ДА/НЕТ!!!!!!!!!!!!!!!!!!!!!!!!!
 async def load_birthday(message: types.Message, state: FSMContext):
     BotDB.add_information(message.from_user.id, "experience", message.text)
     await FSMAnket.next()
-    await message.answer("Какими навыками Вы владеете? 👨‍🔧")
+    await message.answer("Какими навыками Вы владеете? 👨‍🔧", reply_markup=types.ReplyKeyboardRemove())
 
 
 # Какими навыками владеет пользователь
@@ -207,23 +242,29 @@ async def load_birthday(message: types.Message, state: FSMContext):
 async def load_birthday(message: types.Message, state: FSMContext):
     BotDB.add_information(message.from_user.id, "skills", message.text)
     await FSMAnket.next()
-    await message.answer("Есть ли у вас рекомендации? 📄")
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    buttons = ["Да", "Нет"]
+    keyboard.add(*buttons)
+    await message.answer("Есть ли у вас рекомендации? 📄", reply_markup=keyboard)
 
 
 # Есть ли рекомендации
-@dp.message_handler(state=FSMAnket.recommendations) #КНОПАЧЬКИ ДА/НЕТ!!!!!!!!!!!!!!!!!!!!!!!!!
+@dp.message_handler(state=FSMAnket.recommendations)  # КНОПАЧЬКИ ДА/НЕТ!!!!!!!!!!!!!!!!!!!!!!!!!
 async def load_birthday(message: types.Message, state: FSMContext):
     BotDB.add_information(message.from_user.id, "recommendations", message.text)
     await FSMAnket.next()
-    await message.answer("Имеется ли у Вас волонтерская книжка? 📖")
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    buttons = ["Да", "Нет"]
+    keyboard.add(*buttons)
+    await message.answer("Имеется ли у Вас волонтерская книжка? 📖", reply_markup=keyboard)
 
 
 # Есть ли волонтерская книжка
-@dp.message_handler(state=FSMAnket.volunteer_book) #КНОПАЧЬКИ ДА/НЕТ!!!!!!!!!!!!!!!!!!!!!!!!!
+@dp.message_handler(state=FSMAnket.volunteer_book)  # КНОПАЧЬКИ ДА/НЕТ!!!!!!!!!!!!!!!!!!!!!!!!!
 async def load_birthday(message: types.Message, state: FSMContext):
     BotDB.add_information(message.from_user.id, "volunteer_book", message.text)
     await FSMAnket.next()
-    await message.answer("Почему именно Вы должны стать волонтером? 🌟 \n\nРасскажите коротко о себе и своих качествах")
+    await message.answer("Почему именно Вы должны стать волонтером? 🌟 \n\nРасскажите коротко о себе и своих качествах", reply_markup=types.ReplyKeyboardRemove())
 
 
 # Почему именно Вы
@@ -231,15 +272,20 @@ async def load_birthday(message: types.Message, state: FSMContext):
 async def load_birthday(message: types.Message, state: FSMContext):
     BotDB.add_information(message.from_user.id, "pitch", message.text)
     await FSMAnket.next()
-    await message.answer("Для повышения шансов на успешное прохождения отбора Вы можете прикрепить небольшое видео о себе, либо ссылку на него 🎬 \n\nЭто необязательный шаг, по желанию можете пропустить его")
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    buttons = ["Пропустить"]
+    keyboard.add(*buttons)
+    await message.answer(
+        "Для повышения шансов на успешное прохождения отбора Вы можете прикрепить небольшое видео о себе, либо ссылку "
+        "на него 🎬 \n\nЭто необязательный шаг, по желанию можете пропустить его", reply_markup=keyboard)
 
 
 # Видео о себе
-@dp.message_handler(state=FSMAnket.video) #ДОБАВИТЬ ВОЗМОЖНОСТЬ ПРОПУСКА ДАННОГО ШАГА!!!!!!!!!!!!!!!!!
+@dp.message_handler(state=FSMAnket.video)  # ДОБАВИТЬ ВОЗМОЖНОСТЬ ПРОПУСКА ДАННОГО ШАГА!!!!!!!!!!!!!!!!!
 async def load_birthday(message: types.Message, state: FSMContext):
     BotDB.add_information(message.from_user.id, "video", message.text)
     await state.reset_state()
-    await message.answer("Если у Вас есть, что добавить к анкете, можете написать это сейчас🙌")
+    await message.answer("Если у Вас есть, что добавить к анкете, можете написать это сейчас🙌", reply_markup=types.ReplyKeyboardRemove())
 
 #
 # # Добавка к анкете

@@ -1,5 +1,6 @@
 import sqlite3
 
+
 class BotDB:
 
     def __init__(self, db_file):
@@ -22,17 +23,19 @@ class BotDB:
         self.cursor.execute("INSERT INTO users (user_id) VALUES (?);", (user_id,))
         return self.conn.commit()
 
+    def get_bd(self, ):
+        return self.cursor.execute("SELECT * FROM users;").fetchall()
 
     def add_information(self, user_id, name_of_column, value):
         """Добавляем информацию о пользователе"""
-        #columns = ["user_id", "full_name", "date_of_application", "mail", "birthday", "phone_number", "education",
+        # columns = ["user_id", "full_name", "date_of_application", "mail", "birthday", "phone_number", "education",
         #           "territory", "arrival_date", "departure_date", "lang", "experience", "skills", "recommendations",
         #           "volunteer_book", "pitch", "video", "reviewed"]
 
-        self.cursor.execute("UPDATE users SET '{0}' = '{1}' WHERE user_id = '{2}';".format(name_of_column, value, user_id))
+        self.cursor.execute(
+            "UPDATE users SET '{0}' = '{1}' WHERE user_id = '{2}';".format(name_of_column, value, user_id))
 
         return self.conn.commit()
-
 
     def close(self):
         """Закрываем соединение с БД"""
