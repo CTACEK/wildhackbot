@@ -1,6 +1,7 @@
 from aiogram import types, Dispatcher
 
 import re
+import requests
 from bot import BotDB
 from aiogram import Bot, types
 from aiogram.dispatcher import FSMContext
@@ -10,6 +11,14 @@ from config import adminpass
 from dispatcher import dp, bot
 import keyboards
 import searching
+from pathlib import Path
+from aiogram.types import ContentType, File, Message
+from vosk import Model, KaldiRecognizer
+import sys
+import json
+import os
+import time
+import wave
 
 
 class FMSAdmin(StatesGroup):
@@ -18,6 +27,51 @@ class FMSAdmin(StatesGroup):
     find_anket = State()
     add_comment = State()
 
+
+#
+#
+# #
+# async def handle_file(file: File, file_name: str, path: str):
+#     Path(f"{path}").mkdir(parents=True, exist_ok=True)
+#
+#     await bot.download_file(file_path=file.file_path, destination=f"{path}/{file_name}")
+
+
+@dp.message_handler(content_types=[ContentType.VOICE])
+async def voice_message_handler(message: Message):
+    print("aaa")
+    model = Model(r"vosk-model-small-ru-0.22")
+
+    wf = wave.open(r'C:\Users\Яна\PycharmProjects\wildhackbot\232.wav', "rb")
+    rec = KaldiRecognizer(model, 16000)
+
+    result = ''
+    last_n = False
+
+    while True:
+        data = wf.readframes(16000)
+        if len(data) == 0:
+            break
+
+        if rec.AcceptWaveform(data):
+            res = json.loads(rec.Result())
+
+            if res['text'] != '':
+                result += f" {res['text']}"
+                last_n = False
+            elif not last_n:
+                result += '\n'
+                last_n = True
+
+    res = json.loads(rec.FinalResult())
+    result += f" {res['text']}"
+
+    print(result)
+
+
+#
+#
+#
 
 @dp.message_handler(commands="admin", state=None)
 async def iwanttobeadmin(message: types.Message):
@@ -42,7 +96,7 @@ async def list(message: types.Message):
     db = BotDB.get_bd()
     k = 1
     for person in db:
-        if person[3] is not None and person[-1] is None:
+        if person[3] is not None and (person[-1] == None or person[-1] == "Рассмотрение"):
             ans += f"{str(k)}. {person[3]} \n"
             k += 1
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -113,7 +167,6 @@ async def list(message: types.Message, state: FSMContext):
 @dp.message_handler(state=FMSAdmin.add_comment)
 async def list(message: types.Message, state: FSMContext):
     data = await state.get_data()
-    print(data)
     BotDB.add_information(data.get("finded"), "reviewed", message.text)
     await message.answer("Комментарий успешно добавлен", reply_markup=keyboards.keyboardadmin())
     await FMSAdmin.connectionpass.set()
@@ -141,21 +194,31 @@ async def start(message: types.Message):
                                    reply_markup=keyboards.keyboarduser())
 
 
+@dp.message_handler(lambda message: message.text == "Проверить статус заявки")
+async def without_puree(message: types.Message):
+    await message.answer(str(BotDB.get_status(message.from_user.id))[3:-4])
+
+
 @dp.message_handler(lambda message: message.text == "FAQ")
 async def without_puree(message: types.Message):
-    await message.answer("Факью")
+    await message.answer(f"{message.from_user.first_name}, позвольте быстро ввести Вас в курс дела и рассказать о том, что именно я умею 🐻\n\nЯ - КроноцкийБот, прямо в данном чате Вы можете заполнить заявку волонтера, задать вопрос по поводу волонтерской деятельности в формате текста или голосового сообщения, на который я очень-очень постараюсь дать верный ответ")
 
 
 @dp.message_handler(lambda message: message.text == "О заповеднике")
 async def without_puree(message: types.Message):
-    await message.answer("Бла бла бла")
+    await message.answer("""Мы сохраняем заповедные территории Камчатки и пробуждаем любовь к природе 🌱❤️
+
+Наша организация – высокопрофессиональное экспертное сообщество с большим опытом природоохранной работы, который выходит за рамки вверенных нам природоохранных территорий. Мы стремимся содействовать решению региональных и российских проблем, связанных с экологией, природопользованием, сохранением редких и промысловых видов, подготовкой профессиональных кадров в сфере управления природными ресурсами и экологическим воспитанием подрастающего поколения.
+
+Подробнее обо всем вы можете узнать на сайте заповедника - www.kronoki.ru""")
 
 
-@dp.message_handler(state=None)
-async def without_puree(message: types.Message):
-    question = message.text
-    result = searching.theBotMind(question)
-    await message.answer(result)
+# @dp.message_handler(state=None)
+# async def without_puree(message: types.Message):
+#     question = message.text
+#     if question != "Заполнить заявку":
+#         result = searching.theBotMind(question)
+#         await message.answer(result)
 
 
 # Заполнение анкеты
@@ -177,17 +240,42 @@ class FSMAnket(StatesGroup):
     pitch = State()
     video = State()
     check = State()
+    checkmain = State()
 
 
 # Начало диалога
 @dp.message_handler(lambda message: message.text == "Заполнить заявку", state=None)
 async def cm_start(message: types.Message):
     await FSMAnket.full_name.set()
-    # keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    # buttons = ["Да", "Нет"]
-    # keyboard.add(*buttons)
     await message.answer("Для заполнения анкеты напишите свое ФИО 👤", reply_markup=types.ReplyKeyboardRemove())
 
+
+@dp.message_handler(state=None)
+async def without_puree(message: types.Message):
+    question = message.text
+    if question != "Заполнить заявку":
+        result = searching.theBotMind(question)
+        await message.answer(result)
+        if result == """После получения подтверждения отбора Вашей кандидатуры, при постановке в график, учитываются Ваши пожелания по территориям ООПТ для осуществления добровольческой деятельности.
+В случае если график групп на данную территорию переполнен, Вам будет предложена другая территория, при наличии свободных мест.
+Ознакомиться с актуальным графиком набора волонтеров можно на сайте www.kronoki.ru, либо по ссылке https://kronoki.ru/ru/volunteerism/programs/
+При положительном решении, Вы получаете от нас письмо с приложениями:
+договор о добровольческой деятельности для ознакомления:
+1. с техническим заданием
+2. с согласием на обработку персональных данных
+3. правилами нахождения на территории.""":
+            await message.answer("Ниже прикреплён договор в волонтёрской деятельности:")
+            await dp.bot.send_document(message.from_user.id,
+                                       "BQACAgIAAxkBAAILT2Gsc_kWe6Gisvc4ZRswOCQniqOCAAJbEQACRWVpSaagd7quCfD8IgQ")
+
+
+# @dp.message_handler(content_types=types.ContentType.DOCUMENT, state=None)
+# async def send_order_finish(message: types.Message, state: FSMContext):
+#     msg_document = message.document.file_id
+#     print("auf")
+#     # await dp.bot.send_document(775430746, msg_document)
+#     print(msg_document)
+#     await state.reset_state()
 
 # Грузим ФИО
 @dp.message_handler(state=FSMAnket.full_name)
@@ -328,29 +416,34 @@ async def load_birthday(message: types.Message, state: FSMContext):
 @dp.message_handler(state=FSMAnket.video)  # ДОБАВИТЬ ВОЗМОЖНОСТЬ ПРОПУСКА ДАННОГО ШАГА!!!!!!!!!!!!!!!!!
 async def load_birthday(message: types.Message, state: FSMContext):
     BotDB.add_information(message.from_user.id, "video", message.text)
-    await FSMAnket.next()
-    await message.answer("Если у Вас есть, что добавить к анкете, можете написать это сейчас🙌",
+    # await FSMAnket.next()
+    await state.finish()
+    # await message.answer("Ваша анкета заполнена, хотите проверить свои основные данные? 👀",
+    #                      reply_markup=types.ReplyKeyboardRemove())
+    await message.answer("Ваша анкета заполнена, и направлена модератору 👀",
                          reply_markup=types.ReplyKeyboardRemove())
+    await start(message)
 
 
-# Добавка к анкете
-@dp.message_handler(state=FSMAnket.check)
-async def load_birthday(message: types.Message, state: FSMContext):
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["Да", "Нет"]
-    keyboard.add(*buttons)
-    await state.finish()
-    await message.answer(
-        "Ваша анкета заполнена, хотите проверить свои основные данные? 👀",
-        reply_markup=types.ReplyKeyboardRemove())  # КНОПАЧЬКА ДА/НЕТ ДЛЯ ВОЗМОЖНОСТИ ПРОВЕРКИ ДАННЫХ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# # Добавка к анкете
+# @dp.message_handler(state=FSMAnket.check)
+# async def load_birthday(message: types.Message, state: FSMContext):
+#     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+#     buttons = ["Да", "Нет"]
+#     keyboard.add(*buttons)
+#     await state.finish()
+#     await message.answer("*ожидаю ответ*",reply_markup=keyboard)
+#
+#
+# @dp.message_handler(state=FSMAnket.checkmain)
+# async def load_birthday(message: types.Message, state: FSMContext):
+#     if message.text == "Да":
+#         await message.answer("Если вы где-то ошиблись, нажмите на 'Заполнить анкету'")
+#     else:
+#         pass
+#     await state.finish()
+#     await message.answer(
+#         "Спасибо, Ваша заявка оправлена модератору и скоро будет обработана.\nСтатус заявки Вы можете узнать в главном меню",
+#         reply_markup=types.ReplyKeyboardRemove())
+#     keyboards.keyboarduser()
 
-
-@dp.message_handler(state=FSMAnket.check)
-async def load_birthday(message: types.Message, state: FSMContext):
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["Да", "Нет"]
-    keyboard.add(*buttons)
-    await state.finish()
-    await message.answer(
-        "Ваша анкета заполнена, хотите проверить свои основные данные? 👀",
-        reply_markup=types.ReplyKeyboardRemove())

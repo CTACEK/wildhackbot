@@ -10,9 +10,12 @@ def keyboardadmin():
     keyboard.add(*buttons)
     return keyboard
 
+
 def keyboarduser():
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["Заполнить заявку", "FAQ", "О заповеднике"]
+    buttons = ["Заполнить заявку", "Проверить статус заявки", "FAQ", "О заповеднике"]
     keyboard.add(*buttons)
     return keyboard
-#
+
+
+

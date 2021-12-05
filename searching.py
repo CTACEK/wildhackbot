@@ -21,7 +21,7 @@ def theGetAnswerByTarget(question):  # получение ответа
     texts = []  # реплики
     module = []  # их ключи
 
-    conn = sqlite3.connect("E:/Яна/Загрузки/Telegram Desktop/questions")
+    conn = sqlite3.connect("E:/Яна/Загрузки/Telegram Desktop/questions.sqlite3")
     cur = conn.cursor()
     db = cur.execute("SELECT * from data_config;").fetchall()
 
