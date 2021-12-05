@@ -38,36 +38,36 @@ class FMSAdmin(StatesGroup):
 #
 
 
-@dp.message_handler(content_types=[ContentType.VOICE])
-async def voice_message_handler(message: Message):
-    print("aaa")
-    model = Model(r"vosk-model-small-ru-0.22")
-
-    wf = wave.open(r'C:\Users\Яна\PycharmProjects\wildhackbot\232.wav', "rb")
-    rec = KaldiRecognizer(model, 16000)
-
-    result = ''
-    last_n = False
-
-    while True:
-        data = wf.readframes(16000)
-        if len(data) == 0:
-            break
-
-        if rec.AcceptWaveform(data):
-            res = json.loads(rec.Result())
-
-            if res['text'] != '':
-                result += f" {res['text']}"
-                last_n = False
-            elif not last_n:
-                result += '\n'
-                last_n = True
-
-    res = json.loads(rec.FinalResult())
-    result += f" {res['text']}"
-
-    print(result)
+# @dp.message_handler(content_types=[ContentType.VOICE])
+# async def voice_message_handler(message: Message):
+#     print("aaa")
+#     model = Model(r"vosk-model-small-ru-0.22")
+#
+#     wf = wave.open(r'C:\Users\Яна\PycharmProjects\wildhackbot\232.wav', "rb")
+#     rec = KaldiRecognizer(model, 16000)
+#
+#     result = ''
+#     last_n = False
+#
+#     while True:
+#         data = wf.readframes(16000)
+#         if len(data) == 0:
+#             break
+#
+#         if rec.AcceptWaveform(data):
+#             res = json.loads(rec.Result())
+#
+#             if res['text'] != '':
+#                 result += f" {res['text']}"
+#                 last_n = False
+#             elif not last_n:
+#                 result += '\n'
+#                 last_n = True
+#
+#     res = json.loads(rec.FinalResult())
+#     result += f" {res['text']}"
+#
+#     print(result)
 
 
 #
