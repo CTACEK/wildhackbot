@@ -11,14 +11,8 @@ from config import adminpass
 from dispatcher import dp, bot
 import keyboards
 import searching
-from pathlib import Path
-from aiogram.types import ContentType, File, Message
-from vosk import Model, KaldiRecognizer
-import sys
-import json
-import os
-import time
-import wave
+
+
 
 
 class FMSAdmin(StatesGroup):
@@ -28,51 +22,7 @@ class FMSAdmin(StatesGroup):
     add_comment = State()
 
 
-#
-#
-# #
-# async def handle_file(file: File, file_name: str, path: str):
-#     Path(f"{path}").mkdir(parents=True, exist_ok=True)
-#
-#     await bot.download_file(file_path=file.file_path, destination=f"{path}/{file_name}")
-#
 
-
-# @dp.message_handler(content_types=[ContentType.VOICE])
-# async def voice_message_handler(message: Message):
-#     print("aaa")
-#     model = Model(r"vosk-model-small-ru-0.22")
-#
-#     wf = wave.open(r'C:\Users\Яна\PycharmProjects\wildhackbot\232.wav', "rb")
-#     rec = KaldiRecognizer(model, 16000)
-#
-#     result = ''
-#     last_n = False
-#
-#     while True:
-#         data = wf.readframes(16000)
-#         if len(data) == 0:
-#             break
-#
-#         if rec.AcceptWaveform(data):
-#             res = json.loads(rec.Result())
-#
-#             if res['text'] != '':
-#                 result += f" {res['text']}"
-#                 last_n = False
-#             elif not last_n:
-#                 result += '\n'
-#                 last_n = True
-#
-#     res = json.loads(rec.FinalResult())
-#     result += f" {res['text']}"
-#
-#     print(result)
-
-
-#
-#
-#
 
 @dp.message_handler(commands="admin", state=None)
 async def iwanttobeadmin(message: types.Message):

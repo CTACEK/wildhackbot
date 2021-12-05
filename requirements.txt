@@ -1,0 +1,4 @@
+aiogram
+logging
+sqlite3
+sklearn
