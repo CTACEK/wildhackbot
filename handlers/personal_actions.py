@@ -7,7 +7,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 import config
 from config import adminpass
-from dispatcher import dp
+from dispatcher import dp, bot
 import keyboards
 import searching
 
@@ -129,7 +129,6 @@ async def list(message: types.Message, state: FSMContext):
 # стартовая страница
 @dp.message_handler(commands="start")
 async def start(message: types.Message):
-    bot = Bot(token=config.BOT_TOKEN)
     me = await bot.get_me()
 
     if not BotDB.user_exists(message.from_user.id):
