@@ -152,6 +152,13 @@ async def without_puree(message: types.Message):
     await message.answer("Бла бла бла")
 
 
+@dp.message_handler(state=None)
+async def without_puree(message: types.Message):
+    question = message.text
+    result = searching.theBotMind(question)
+    await message.answer(result)
+
+
 # Заполнение анкеты
 
 class FSMAnket(StatesGroup):
