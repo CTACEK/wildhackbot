@@ -1,6 +1,7 @@
 # wildhakatonbot
-Bot for Telegram of Python
+Bot with admin panel for track on Moscow Hackaton "WildHack"
 
+Team:
 https://vk.com/mr_stas_yudov
 
 https://vk.com/yanina.exessa
