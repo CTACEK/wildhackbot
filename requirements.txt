@@ -1,2 +1,2 @@
 aiogram==2.16
-sklearn==1.0.1
+sklearn
