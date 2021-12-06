@@ -1,4 +1,4 @@
-# wildhakatonbot
+# wildhaсkatonbot
 Bot with admin panel for track on Moscow Hackaton "WildHack"
 
 Team:
